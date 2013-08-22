@@ -73,18 +73,19 @@ hexbright hb;
 
 int adjustLED() {
   if(hb.button_pressed() && hb.button_pressed_time()>click) {
-    double d = hb.difference_from_down(); // (0,1)
-    int di = (int)(d*400.0); // (0,400)
-    int i = (di)/10; // (0,40)
-    i *= 50; // (0,2000)
-    i = i>1000 ? 1000 : i;
-    i = i<=0 ? 1 : i;
+		double angle = hb.difference_from_down(); // Between 0 (straight down) and 1 (straight up)
+  	int intensity = (int)(angle * 2 * MAX_LEVEL); // Translate to light intensity range.
+  
+  	//Force intensity value to be within range.  Truncating at MAX_LEVEL 
+  	//from the total range of 2 * MAX_LEVEL has the effect
+  	//of setting full intensity at horizontal level and above.
+  	intensity = (intensity > MAX_LEVEL) ? MAX_LEVEL : intensity;
+  	intensity = (intensity <= 0) ? 1 : intensity;
 
-    hb.set_light(CURRENT_LEVEL, i, 100);
+    hb.set_light(CURRENT_LEVEL, intensity, 100);
     BIT_SET(bitreg,BLOCK_TURNING_OFF);
 
-
-    return i;
+    return intensity;
   }
   return -1;
 }
