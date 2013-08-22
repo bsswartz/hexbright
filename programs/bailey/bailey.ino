@@ -38,7 +38,7 @@ either expressed or implied, of the FreeBSD Project.
 
 static char mode = MODE_OFF;
 
-static const int click = 350; // maximum time for a "short" click
+static const int click = 350; // Maximum duration of a normal click (milliseconds)
 
 hexbright hb;
 
@@ -51,20 +51,20 @@ void setup() {
 void loop() {
    //Have the HexBright library handle the boring stuff!
    hb.update();
-   
    if(!hb.printing_number()) {
      hb.print_power();
    }
    
+   
    // When a normal click is encountered, perform state transitions.
-   // This only happens once, do not put in state runtime code!!!
+   // This only happens once for a transition, only perform
+   // initialization tasks!!!
    if(hb.button_just_released() && hb.button_pressed_time() < click) {
      switch(mode){
-       
        // We are off, but someone wants light now... engage light at full power.
        case MODE_OFF:
         mode=MODE_RUNNING;
-        hb.set_light(CURRENT_LEVEL, MAX_LEVEL, 100);
+        hb.set_light(CURRENT_LEVEL, MAX_LEVEL, 50);
         break;
         
         // A normal press when the light is on should always turn it off.
@@ -81,7 +81,7 @@ void loop() {
        // If the hold is from an off state, give the user some medium light.
        if (mode != MODE_RUNNING) {
          mode=MODE_RUNNING;
-         hb.set_light(CURRENT_LEVEL, 500, 100);
+         hb.set_light(CURRENT_LEVEL, 500, 50);
        }
      } 
      
@@ -93,17 +93,17 @@ void loop() {
 }
 
 int adjustLED() { 
-  double angle = hb.difference_from_down(); // Between 0 and 1
-  int intensity = (int)(angle*2000.0); // (0,2000)
+  double angle = hb.difference_from_down(); // Between 0 (straight down) and 1 (straight up)
+  int intensity = (int)(angle * 2 * MAX_LEVEL); // Translate to light intensity range.
   
-  //Force intensity value to be within range.  Truncating at 1000 from the total range of 2000 has the effect
+  //Force intensity value to be within range.  Truncating at MAX_LEVEL 
+  //from the total range of 2 * MAX_LEVEL has the effect
   //of creating full intensity at horizontal level and above.
-  intensity = intensity>1000 ? 1000 : intensity;
-  intensity = intensity<=0 ? 1 : intensity;
+  intensity = (intensity > MAX_LEVEL) ? MAX_LEVEL : intensity;
+  intensity = (intensity <= 0) ? 1 : intensity;
   
   mode=MODE_RUNNING;
   hb.set_light(CURRENT_LEVEL, intensity, 100);
   
   return intensity;
 }
-
